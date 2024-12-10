@@ -1,14 +1,29 @@
+# Define the stages of the CI/CD pipeline
 stages:
-    # Define the stages of the CI/CD pipeline
-    - build # This pipeline has one stage named 'build'
+    - build       # The first stage, responsible for building the project
+    - registry    # The second stage, responsible for building and pushing Docker images
 
+# Define a job named 'build-backend'
 build-backend:
-    # Define a job named 'build-backend'
-    image: node:23-bookworm
-    # Specify the Docker image to use for this job. In this case, a Node.js image based on the Debian Bookworm distribution
-    stage: build
-    # Assign this job to the 'build' stage of the pipeline
+    image: node:23-bookworm  # Use a Node.js image (based on Debian Bookworm) as the environment
+    stage: build             # Assign this job to the 'build' stage
     script:
-      # Define the commands to execute for this job
-      - yarn install 
-      # Run the 'yarn install' command to install all project dependencies defined in package.json
+      - yarn install         # Install project dependencies using Yarn
+
+# Define a job named 'build-docker-image'
+build-docker-image:
+    stage: registry          # Assign this job to the 'registry' stage
+    before_script:
+      - echo "Docker registry url is $CI_REGISTRY"          # Output the Docker registry URL
+      - echo "Docker registry username is $CI_REGISTRY_USER" # Output the Docker registry username
+      - echo "Docker registry repo is $CI_REGISTRY_IMAGE"   # Output the Docker repository name
+
+    script:
+      - docker build -t ${CI_REGISTRY_IMAGE}:latest-dev -t ${CI_REGISTRY_IMAGE}:$CI_COMMIT_SHORT_SHA . # Build a Docker image with "latest-dev" and SHA tags
+      - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY # Log in to the Docker registry
+      - docker push ${CI_REGISTRY_IMAGE}:latest-dev       # Push the "latest-dev" tagged image
+      - docker push ${CI_REGISTRY_IMAGE}:$CI_COMMIT_SHORT_SHA # Push the SHA-tagged image
+
+    only:
+      - main        # Execute this job only on the `main` branch
+      - feature/MN-26 # Also execute this job on the `feature/MN-26` branch
