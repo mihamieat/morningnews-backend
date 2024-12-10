@@ -1,3 +1,4 @@
+![pipeline status](https://gitlab.com/la-capsule-morning-news/morningnews-backend/badges/main/pipeline.svg)
 # Morning News Backend 🗞️
 
 ## Overview 🔍
