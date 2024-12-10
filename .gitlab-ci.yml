@@ -10,8 +10,8 @@ build-backend:
     script:
       - yarn install         # Install project dependencies using Yarn
 
-# Define a job named 'build-docker-image'
-build-docker-image:
+# Define a job named 'build-dev-docker-image'
+build-dev-docker-image:
     image: docker
     stage: registry          # Assign this job to the 'registry' stage
     services:
@@ -23,13 +23,35 @@ build-docker-image:
       - echo "Docker registry url is $CI_REGISTRY"          # Output the Docker registry URL
       - echo "Docker registry username is $CI_REGISTRY_USER" # Output the Docker registry username
       - echo "Docker registry repo is $CI_REGISTRY_IMAGE"   # Output the Docker repository name
-
     script:
+      - export PACKAGE_VERSION=$(cat package.json | grep version | head -1 | awk -F: '{ print $2 }' | sed 's/[",]//g')
+      - echo "Package version is $PACKAGE_VERSION"          # Output the applicative version declared into the package.json file
       - docker build -t ${CI_REGISTRY_IMAGE}:latest-dev -t ${CI_REGISTRY_IMAGE}:$CI_COMMIT_SHORT_SHA . # Build a Docker image with "latest-dev" and SHA tags
       - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY # Log in to the Docker registry
       - docker push ${CI_REGISTRY_IMAGE}:latest-dev       # Push the "latest-dev" tagged image
       - docker push ${CI_REGISTRY_IMAGE}:$CI_COMMIT_SHORT_SHA # Push the SHA-tagged image
-
     only:
       - main        # Execute this job only on the `main` branch
-      - feature/MN-26 # Also execute this job on the `feature/MN-26` branch
+
+  # Define a job named 'build-prod-docker-image'
+build-prod-docker-image:
+    image: docker
+    stage: registry          # Assign this job to the 'registry' stage
+    services:
+      - docker:dind
+    variables:
+      DOCKER_HOST: tcp://docker:2375
+      DOCKER_TLS_CERTDIR: ""  # Disbale TLS to simplify Docker connections
+    before_script:
+      - export PACKAGE_VERSION=$(cat package.json | grep version | head -1 | awk -F: '{ print $2 }' | sed 's/[",]//g')
+      - echo "Package version is $PACKAGE_VERSION"          # Output the applicative version declared into the package.json file
+      - echo "Docker registry url is $CI_REGISTRY"          # Output the Docker registry URL
+      - echo "Docker registry username is $CI_REGISTRY_USER" # Output the Docker registry username
+      - echo "Docker registry repo is $CI_REGISTRY_IMAGE"   # Output the Docker repository name
+    script:
+      - docker build -t ${CI_REGISTRY_IMAGE}:latest -t ${CI_REGISTRY_IMAGE}:$PACKAGE_VERSION . # Build a Docker image with "latest" and applicative version
+      - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY # Log in to the Docker registry
+      - docker push ${CI_REGISTRY_IMAGE}:latest       # Push the "latest" tagged image
+      - docker push ${CI_REGISTRY_IMAGE}:$PACKAGE_VERSION # Push the applicative version tagged image
+    only:
+      - preprod        # Execute this job only on the `preprod` branch
