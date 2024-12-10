@@ -1,0 +1,14 @@
+stages:
+    # Define the stages of the CI/CD pipeline
+    - build # This pipeline has one stage named 'build'
+
+build-backend:
+    # Define a job named 'build-backend'
+    image: node:23-bookworm
+    # Specify the Docker image to use for this job. In this case, a Node.js image based on the Debian Bookworm distribution
+    stage: build
+    # Assign this job to the 'build' stage of the pipeline
+    script:
+      # Define the commands to execute for this job
+      - yarn install 
+      # Run the 'yarn install' command to install all project dependencies defined in package.json
