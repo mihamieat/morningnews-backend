@@ -12,6 +12,7 @@ build-backend:
 
 # Define a job named 'build-docker-image'
 build-docker-image:
+    image: docker
     stage: registry          # Assign this job to the 'registry' stage
     services:
       - docker:dind
