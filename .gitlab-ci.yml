@@ -24,7 +24,7 @@ build-dev-docker-image:
       - echo "Docker registry username is $CI_REGISTRY_USER" # Output the Docker registry username
       - echo "Docker registry repo is $CI_REGISTRY_IMAGE"   # Output the Docker repository name
     script:
-      - export PACKAGE_VERSION=$(cat package.json | grep version | head -1 | awk -F: '{ print $2 }' | sed 's/[",]//g')
+      - export PACKAGE_VERSION="$(cat package.json | grep version | head -1 | awk -F: '{ print $2 }' | sed 's/[",]//g')"
       - echo "Package version is $PACKAGE_VERSION"          # Output the applicative version declared into the package.json file
       - docker build -t ${CI_REGISTRY_IMAGE}:latest-dev -t ${CI_REGISTRY_IMAGE}:$CI_COMMIT_SHORT_SHA . # Build a Docker image with "latest-dev" and SHA tags
       - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY # Log in to the Docker registry
@@ -44,7 +44,7 @@ build-prod-docker-image:
       DOCKER_HOST: tcp://docker:2375
       DOCKER_TLS_CERTDIR: ""  # Disbale TLS to simplify Docker connections
     before_script:
-      - export PACKAGE_VERSION=$(cat package.json | grep version | head -1 | awk -F: '{ print $2 }' | sed 's/[",]//g')
+      - export PACKAGE_VERSION="$(cat package.json | grep version | head -1 | awk -F: '{ print $2 }' | sed 's/[",]//g')"
       - echo "Package version is $PACKAGE_VERSION"          # Output the applicative version declared into the package.json file
       - echo "Docker registry url is $CI_REGISTRY"          # Output the Docker registry URL
       - echo "Docker registry username is $CI_REGISTRY_USER" # Output the Docker registry username
