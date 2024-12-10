@@ -32,6 +32,7 @@ build-dev-docker-image:
       - docker push ${CI_REGISTRY_IMAGE}:$CI_COMMIT_SHORT_SHA # Push the SHA-tagged image
     only:
       - main        # Execute this job only on the `main` branch
+      - feature/MN-26 # Also execute this job on the `feature/MN-26` branch
 
   # Define a job named 'build-prod-docker-image'
 build-prod-docker-image:
