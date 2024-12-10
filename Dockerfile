@@ -10,6 +10,9 @@ WORKDIR /home/node/app
 # copy project files
 COPY --chown=node:node . .
 
+# add curl into image
+RUN apk --no-cache add curl
+
 # set user to "node"
 USER node
 
