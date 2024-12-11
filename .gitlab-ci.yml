@@ -2,6 +2,7 @@
 stages:
     - build       # The first stage, responsible for building the project
     - lint
+    - test
     - registry    # The second stage, responsible for building and pushing Docker images
 
 cache:
@@ -23,6 +24,18 @@ eslint-check:
     stage: lint
     script:
       - yarn lint       # Run ESLint to check the codebase for errors
+
+locust-stress-test:
+    image: nikolaik/python-nodejs:latest # Image that contains NodeJS and python
+    stage: test
+    script:
+      - python3 -m venv .venv
+      - source .venv/bin/activate
+      - pip install -r requirements.txt
+      - yarn run start & npx wait-on http://localhost:3000
+      - locust --headless --users 1000 --spawn-rate 1 -H http://localhost:3000 -t 15s
+    needs:
+      - build-backend
 
 # Define a job named 'build-dev-docker-image'
 build-dev-docker-image:
