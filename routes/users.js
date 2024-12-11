@@ -14,7 +14,7 @@ router.post('/signup', (req, res) => {
   }
 
   // Check if the user has not already been registered
-  User.findOne({ username: req.body.username }).then(data => {
+  User.findOne({ username: req.body.username }).then((data) => {
     if (data === null) {
       const hash = bcrypt.hashSync(req.body.password, 10);
 
@@ -25,7 +25,7 @@ router.post('/signup', (req, res) => {
         canBookmark: true,
       });
 
-      newUser.save().then(newDoc => {
+      newUser.save().then((newDoc) => {
         res.json({ result: true, token: newDoc.token });
       });
     } else {
@@ -41,7 +41,7 @@ router.post('/signin', (req, res) => {
     return;
   }
 
-  User.findOne({ username: req.body.username }).then(data => {
+  User.findOne({ username: req.body.username }).then((data) => {
     if (data && bcrypt.compareSync(req.body.password, data.password)) {
       res.json({ result: true, token: data.token });
     } else {
@@ -51,7 +51,7 @@ router.post('/signin', (req, res) => {
 });
 
 router.get('/canBookmark/:token', (req, res) => {
-  User.findOne({ token: req.params.token }).then(data => {
+  User.findOne({ token: req.params.token }).then((data) => {
     if (data) {
       res.json({ result: true, canBookmark: data.canBookmark });
     } else {
