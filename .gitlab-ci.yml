@@ -1,7 +1,14 @@
 # Define the stages of the CI/CD pipeline
 stages:
     - build       # The first stage, responsible for building the project
+    - lint
     - registry    # The second stage, responsible for building and pushing Docker images
+
+cache:
+  key: cache-$CI_COMMIT_REF_SLUG
+  paths:
+    - node_modules/
+    - package-lock.json
 
 # Define a job named 'build-backend'
 build-backend:
@@ -9,6 +16,13 @@ build-backend:
     stage: build             # Assign this job to the 'build' stage
     script:
       - yarn install         # Install project dependencies using Yarn
+
+# Test code linting with eslint
+eslint-check:
+    image: node:23-bookworm  # Use a Node.js image (based on Debian Bookworm) as the environment
+    stage: lint
+    script:
+      - yarn lint       # Run ESLint to check the codebase for errors
 
 # Define a job named 'build-dev-docker-image'
 build-dev-docker-image:
