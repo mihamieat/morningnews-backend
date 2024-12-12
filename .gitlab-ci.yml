@@ -1,9 +1,10 @@
 # Define the stages of the CI/CD pipeline
 stages:
     - build       # The first stage, responsible for building the project
-    - lint
-    - test
-    - registry    # The second stage, responsible for building and pushing Docker images
+    - lint        # The second stage, responsible for testing code quality
+    - test        # The third stage, responsible for testing the backend application
+    - registry    # The fourth stage, responsible for building and pushing Docker images
+   
 
 cache:
   key: cache-$CI_COMMIT_REF_SLUG
@@ -24,6 +25,13 @@ eslint-check:
     stage: lint
     script:
       - yarn lint       # Run ESLint to check the codebase for errors
+
+  # Define a job named 'jest-test'
+jest-test:
+    image: node:23-bookworm 
+    stage: test
+    script:
+      - npm run test
 
 locust-stress-test:
     image: nikolaik/python-nodejs:latest # Image that contains NodeJS and python
@@ -80,3 +88,7 @@ build-prod-docker-image:
       - docker push ${CI_REGISTRY_IMAGE}:$PACKAGE_VERSION # Push the applicative version tagged image
     only:
       - preprod        # Execute this job only on the `preprod` branch
+
+
+
+
