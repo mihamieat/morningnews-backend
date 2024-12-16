@@ -1,0 +1,103 @@
+services:
+  mongo:
+    # MongoDB service definition
+    image: mongo
+    # Automatically restart the container unless explicitly stopped
+    restart: unless-stopped
+    environment:
+      # Environment variables to initialize the MongoDB root user
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+    # Command to run MongoDB in quiet mode, reducing unnecessary logs
+    command: --quiet
+    healthcheck:
+      # Defines a health check to monitor the MongoDB container
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      # Delay before the health check starts
+      start_period: 10s
+      # Interval between health check executions
+      interval: 10s
+      # Maximum duration for the health check to complete
+      timeout: 5s
+      # Number of retries before marking the container as unhealthy
+      retries: 5
+    volumes:
+      # Maps a local directory (./mongo-data) to the MongoDB data directory in the container
+      - mongodb_data:/data/db
+
+  mongo-express:
+    # Web-based administrative interface for MongoDB
+    image: mongo-express
+    # Automatically restart the container unless explicitly stopped
+    restart: unless-stopped
+    ports:
+      # Expose the web interface on port 8081
+      - 8081:8081
+    environment:
+      # Environment variables for Mongo Express to connect to MongoDB
+      ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_EXPRESS_USERNAME}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_EXPRESS_PASSWORD}
+      ME_CONFIG_MONGODB_ENABLE_ADMIN: true
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_PASSWORD}
+      ME_CONFIG_MONGODB_SERVER: mongo
+      ME_CONFIG_MONGODB_PORT: 27017
+    depends_on:
+      # Ensure MongoDB is healthy before starting Mongo Express
+      mongo:
+        condition: service_healthy
+
+  backend: 
+    # Custom backend service definition based on the Dockerfile in the root folder
+    build: 
+      context: .
+      dockerfile: Dockerfile
+
+    # Automatically restart the container unless explicitly stopped
+    restart: unless-stopped
+    ports:
+      # Expose the backend service on port 3000
+      - 3000:3000
+    environment:
+      # Environment variables for the backend service
+      # Connection string to MongoDB
+      CONNECTION_STRING: ${MONGO_CONNECTION_STRING}
+      # External API key to retrieves news
+      NEWS_API_KEY: ${NEWS_API_KEY} #d01a440ec54846a492a0787e705a5ac2
+    healthcheck:
+      # Defines a health check to monitor the backend service
+      test: curl -I http://localhost:3000 | grep 200 || exit 1
+      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      # Ensure MongoDB is healthy before starting the backend service
+      mongo:
+        condition: service_healthy
+
+  frontend: 
+    # Custom frontend service definition
+    image: registry.gitlab.com/la-capsule-morning-news/morningnews-frontend:latest-dev
+    # Automatically restart the container unless explicitly stopped
+    restart: unless-stopped
+    ports:
+      # Expose the frontend service on port 3001
+      - 3001:3000
+    environment:
+      # Environment variable for the backend API URL
+      BACKEND_URL: ${BACKEND_URL}
+    healthcheck:
+      # Defines a health check to monitor the frontend service
+      test: curl -I http://localhost:3001 | grep 200 || exit 1
+      start_period: 20s
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      # Ensure the backend service is healthy before starting the frontend
+      backend:
+        condition: service_healthy
+
+volumes:
+  mongodb_data:
