@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
-    "lint": "eslint .",
+    "lint": "eslint --ignore-pattern '**/.venv/'",
     "lint-fix": "eslint . --fix",
     "test": "jest"
   },

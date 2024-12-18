@@ -1,13 +1,18 @@
 # Define the stages of the CI/CD pipeline
 stages:
-    - build       # The first stage, responsible for building the project
-    - lint        # The second stage, responsible for testing code quality
-    - test        # The third stage, responsible for testing the backend application
-    - registry    # The fourth stage, responsible for building and pushing Docker images
-   
+    - build       # Stage responsible for building the project
+    - lint        # Stage responsible for testing code quality
+    - test        # Stage responsible for unit tests of the backend application
+    - load        # Stage responsible for load testing of the backend application
+    - qa          # Stage responsible for quality analysis of the backend application
+    - registry    # Stage responsible for building and pushing Docker images
+  
+# Define environment variables for reusability
+variables:
+  GIT_CLEAN_FLAGS: none
 
 cache:
-  key: cache-$CI_COMMIT_REF_SLUG
+  key: cache-$CI_PIPELINE_ID
   paths:
     - node_modules/
     - package-lock.json
@@ -17,14 +22,14 @@ build-backend:
     image: node:23-bookworm  # Use a Node.js image (based on Debian Bookworm) as the environment
     stage: build             # Assign this job to the 'build' stage
     script:
-      - yarn install         # Install project dependencies using Yarn
+      - npm install         # Install project dependencies using NPM
 
 # Test code linting with eslint
 eslint-check:
     image: node:23-bookworm  # Use a Node.js image (based on Debian Bookworm) as the environment
     stage: lint
     script:
-      - yarn lint       # Run ESLint to check the codebase for errors
+      - npm run lint       # Run ESLint to check the codebase for errors
 
   # Define a job named 'jest-test'
 jest-test:
@@ -33,11 +38,21 @@ jest-test:
     script:
       - npm run test
 
+locust-stress-test:
+    image: nikolaik/python-nodejs:latest # Image that contains NodeJS and python
+    stage: load
+    script:
+      - python3 -m venv .venv
+      - source .venv/bin/activate
+      - pip install -r requirements.txt
+      - npm run start & npx wait-on http://localhost:3000
+      - locust --headless --users 1000 --spawn-rate 1 -H http://localhost:3000 -t 15s
+
 sonarqube-check:
   image: 
     name: sonarsource/sonar-scanner-cli:latest
     entrypoint: [""]
-  stage: test
+  stage: qa
   variables:
     SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
     GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
@@ -50,18 +65,6 @@ sonarqube-check:
   allow_failure: true
   only:
     - main
-
-locust-stress-test:
-    image: nikolaik/python-nodejs:latest # Image that contains NodeJS and python
-    stage: test
-    script:
-      - python3 -m venv .venv
-      - source .venv/bin/activate
-      - pip install -r requirements.txt
-      - yarn run start & npx wait-on http://localhost:3000
-      - locust --headless --users 1000 --spawn-rate 1 -H http://localhost:3000 -t 15s
-    needs:
-      - build-backend
 
 # Define a job named 'build-dev-docker-image'
 build-dev-docker-image:
