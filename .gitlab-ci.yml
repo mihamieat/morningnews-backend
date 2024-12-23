@@ -108,7 +108,7 @@ build-prod-docker-image:
       - docker push ${CI_REGISTRY_IMAGE}:latest       # Push the "latest" tagged image
       - docker push ${CI_REGISTRY_IMAGE}:$PACKAGE_VERSION # Push the applicative version tagged image
     only:
-      - preprod        # Execute this job only on the `preprod` branch
+      - prod
 
 
 

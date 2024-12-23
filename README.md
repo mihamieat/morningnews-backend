@@ -9,10 +9,10 @@ Built with ***Node.js*** and a ***MongoDB*** database, the ***Morning News backe
 ### With yarn
 1. Ensure npm is installed on your system.
 2. Install Yarn and project dependencies
-```sh
-npm install yarn
-yarn install
-```
+    ```sh
+    npm install yarn
+    yarn install
+    ```
 ### Environment Variables
 You must configure the following mandatory environment variables in a .env file:
 
